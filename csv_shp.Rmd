@@ -1,0 +1,124 @@
+---
+title: "csv shp"
+author: "kat alex"
+date: '28 января 2020 г '
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+
+library("sp", lib.loc="~/R/win-library/3.6")
+library("raster", lib.loc="~/R/win-library/3.6")
+library("sf", lib.loc="~/R/win-library/3.6")
+library(tidyverse)
+
+# Read the .csv file
+kisel <-  read.csv("kisel.csv", sep = ";")
+str(kisel)
+# view column names
+
+
+names(kisel)
+```
+
+
+
+```{r cars}
+names(kisel) <- c("Id_rzkh","adres","year","built_year","exploitati","project_ty","type","floor","floor_count_min","entrance_count","elevators_count","quarters_count","flats","unliving_quarters","area_total","area_resident","area_non_resident","area_common","lat", "lon")
+
+kisel2 <- kisel[-c(17, 203, 313, 398, 770, 796), ]
+
+# Import the line shapefile
+kisel_old <- st_read("Kiselevsk_addresses.shp")
+# view CRS
+st_crs(kisel_old)
+# create crs object
+kisel_CRS <- st_crs(kisel_old)
+#class CRS object
+class(kisel_CRS)
+#
+kisel_sp <- st_as_sf(kisel2, coords = c("lon", "lat"), crs = kisel_CRS)
+
+# write a (shapefile) GPKG
+#!!!!!?????
+#st_write(kisel_sp, "kisel.shp", driver = "ESRI Shapefile")
+st_write(kisel_sp, "kisel2.gpkg", "GPKG")
+
+library(ggplot2)
+
+ggplot() +
+  geom_sf(data = kisel_old, color = "darkred") +
+  geom_sf(data = kisel_sp) +
+  ggtitle("Kiselevsk") +
+  theme(plot.title = element_text(size = 12, face = "bold", color = "darkred"))
+
+
+
+```
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+ggplot() +
+  geom_sf(data = kisel_old, color = "red") +
+  ggtitle("Map of Plot Locations")
+
+
+ggplot() +
+  geom_sf(data = kisel_old, color = "blueviolet", size = 0.5) +
+  geom_sf(data = kisel_sp, color = "gray23", size = 0.5) +
+  ggtitle("Kiselevsk") +
+  theme(plot.title = element_text(size = 12, face = "bold", color = "darkorchid4"))
+```
+
+
+
+```
+#names(kisel) <- c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "10", "13", "14", "15","16","17","18","lat", "lon")
+
+#убрать часть текста из столбца
+kis4 <- st_read("kis4.geojson")
+kis4$adres <- gsub("г. Киселевск. ","" , kis4$adres)
+
+
+kis7 <- st_read("kis6.gpkg")
+kis7$adres <- gsub("ул. ","" , kis7$adres)
+kis7$adres <- gsub(". д.","," , kis7$adres)
+
+
+kis7$adres <- gsub(" ул., ","" , kis7$adres)
+
+#-----------преобразование старого шейпа-------------------------------
+kisel_old$adres <- gsub("ул.,",  ","  , kisel_old$adres)
+kisel_old$adres <- gsub(". д.","," , kisel_old$adres)
+
+kisel_old$adres <- gsub(" ,",  ","  , kisel_old$adres)
+kisel_old$adres <- gsub("пер.",  "переулок"  , kisel_old$adres)
+st_write(kisel_old, "kis_addr.gpkg", "GPKG")
+#-----------------------------------------------------------------------
+st_write(kis7, "kis11.gpkg", "GPKG")
+
+library(leaflet)
+library(leaflet.extras)
+leaflet(kis4) %>%
+  addTiles() %>% #положить на карту
+  addCircles(data = kisel_sp) #добавить точки
+#popup = add lab 
+leaflet(kis4) %>%
+  addTiles() %>% #положить на карту
+  addCircles(data = kis4, radius = 12, weight = 2, popup = kis4$adres, fill = TRUE)#добавить точки
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
