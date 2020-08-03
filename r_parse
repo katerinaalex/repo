@@ -1,0 +1,15 @@
+
+html2 <- read_html("https://www.sks.spb.ru/brands/")
+
+c2 <- html_nodes(html2, ".brand-title")# по найденному в скребковом гаджете
+c2
+
+# создать таблицу c2_list <- data_frame(c2) - возможная ошибка при 
+# при использовании пакета 'rvest'
+
+library("tibble")
+c2_list <- tibble(c2)
+
+
+
+write.csv(c2_list, file = "c2_list.csv")
